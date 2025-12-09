@@ -689,6 +689,7 @@ executable immdb-server
     cardano-crypto-class,
     network,
     optparse-applicative,
+    split,
     ouroboros-consensus,
     ouroboros-consensus-cardano:unstable-cardano-tools,
     with-utf8,

@@ -16,6 +16,8 @@ import Options.Applicative
 import Ouroboros.Consensus.Node.ProtocolInfo (ProtocolInfo (..))
 import Text.Read (readMaybe)
 
+import Data.List.Split (splitOn)
+
 main :: IO ()
 main = withStdTerminalHandles $ do
   cryptoInit
@@ -38,16 +40,13 @@ data Opts = Opts
   }
 
 parseAddr :: String -> Either String HostAddr
-parseAddr s = first contextualize $ traverse tryParse chunks >>= extractResult
+parseAddr s =
+  let contextualize msg = "Cannot parse address (" ++ s ++ "): " ++ msg
+   in first contextualize $ traverse tryParse (splitOn "." s) >>= repack
  where
-  contextualize msg = "Cannot parse address (" ++ s ++ "): " ++ msg
-  chunks = reverse $ map reverse $ go s [] []
-  go [] curr acc = curr : acc
-  go ('.' : t) curr acc = go t [] (curr : acc)
-  go (h : t) curr acc = go t (h : curr) acc
+  repack [a, b, c, d] = Right (a, b, c, d)
+  repack subs = Left $ show (length subs) ++ " (not 4) components"
   tryParse sub = maybe (Left ("cannot parse component '" ++ sub ++ "'")) Right (readMaybe sub)
-  extractResult [sub1, sub2, sub3, sub4] = Right (sub1, sub2, sub3, sub4)
-  extractResult subs = Left (show (length subs) ++ " (not 4) components")
 
 optsParser :: ParserInfo Opts
 optsParser =
